@@ -15,14 +15,14 @@ photoAlbumControllers.controller('photoUploadCtrlJQuery', ['$scope', '$rootScope
     };
 
     $scope.widget = $(".cloudinary_fileupload")
-      .unsigned_cloudinary_upload($.cloudinary.config().upload_preset, {tags: 'myphotoalbum', context:'photo='}, {
+      .unsigned_cloudinary_upload($.cloudinary.config().upload_preset, {tags: '', context:'photo='}, {
         // Uncomment the following lines to enable client side image resizing and validation.
         // Make sure cloudinary/processing is included the js file
-        //disableImageResize: false,
-        //imageMaxWidth: 800,
-        //imageMaxHeight: 600,
-        //acceptFileTypes: /(\.|\/)(gif|jpe?g|png|bmp|ico)$/i,
-        //maxFileSize: 20000000, // 20MB
+        disableImageResize: false,
+        imageMaxWidth: 800,
+        imageMaxHeight: 1600,
+        acceptFileTypes: /(\.|\/)(gif|jpe?g|png|bmp|ico)$/i,
+        maxFileSize: 20000000, // 20MB
         dropZone: "#direct_upload_jquery",
         start: function (e) {
           $scope.status = "Starting upload...";
@@ -80,7 +80,6 @@ photoAlbumControllers.controller('photoUploadCtrlJQuery', ['$scope', '$rootScope
             url: "https://api.cloudinary.com/v1_1/" + $.cloudinary.config().cloud_name + "/upload",
             fields: {
               upload_preset: $.cloudinary.config().upload_preset,
-              tags: 'myphotoalbum',
               context: 'photo=' + $scope.title
             },
             file: file
