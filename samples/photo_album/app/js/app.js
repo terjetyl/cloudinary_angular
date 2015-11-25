@@ -43,49 +43,90 @@ photoAlbumApp.config(['$routeProvider',
   photoAlbumApp.directive('clientUpload', [function(){
     return {
       restrict : 'E',
-      scope: { title:'@' },
+      scope: { title:'@', maxClientWidth:'@', maxClientHeight:'@' },
+      controller: ['$scope', '$rootScope', '$routeParams', '$location',
+        /* Uploading with jQuery File Upload */
+        function($scope, $rootScope, $routeParams, $location) {
+          $scope.files = {};
+          $scope.widget = $(".cloudinary_fileupload")
+            .unsigned_cloudinary_upload($.cloudinary.config().upload_preset, {tags: '', context:'photo='}, {
+              // Uncomment the following lines to enable client side image resizing and validation.
+              // Make sure cloudinary/processing is included the js file
+              disableImageResize: false,
+              imageMaxWidth: $scope.maxClientWidth,
+              imageMaxHeight: $scope.maxClientHeight,
+              acceptFileTypes: /(\.|\/)(gif|jpe?g|png|bmp|ico)$/i,
+              maxFileSize: 20000000, // 20MB
+              dropZone: "#direct_upload_jquery",
+              start: function (e) {
+                $scope.status = "Starting upload...";
+                $scope.files = {};
+                $scope.$apply();
+              },
+              fail: function (e, data) {
+                $scope.status = "Upload failed";
+                $scope.$apply();
+              }
+            })
+            .on("cloudinaryprogress", function (e, data) {
+              var name = data.files[0].name;
+              var file = $scope.files[name] || {};
+              file.progress = Math.round((data.loaded * 100.0) / data.total);
+              file.status = "Uploading... " + file.progress + "%";
+              $scope.files[name] = file;
+              $scope.$apply();
+              })
+            .on("cloudinaryprogressall", function (e, data) {
+              $scope.progress = Math.round((data.loaded * 100.0) / data.total);
+              $scope.status = "Uploading... " + $scope.progress + "%";
+              $scope.$apply();
+            })
+            .on("cloudinarydone", function (e, data) {
+              $rootScope.photos = $rootScope.photos || [];
+              data.result.context = {custom: {photo: $scope.title}};
+              $scope.result = data.result;
+              var name = data.files[0].name;
+              var file = $scope.files[name] ||{};
+              file.name = name;
+              file.url = data.result.url;
+              file.result = data.result;
+              $scope.files[name] = file;
+              $rootScope.photos.push(data.result);
+              $scope.$apply();
+            }).on("cloudinaryfail", function(e, data){
+                var file = $scope.files[name] ||{};
+                file.name = name;
+                file.result = data.result;
+                $scope.files[name] = file;
+      
+              });
+        }],
       template : "<div id='direct_upload_jquery' ng-model='files'>" + 
-                    "<h1>New Photo</h1>" + 
-                    "<h2>Direct upload from the browser with jQuery File Upload</h2>" + 
-                    "<p>You can also drag and drop an image file into the dashed area.</p>" + 
-                    "<form>" + 
-                    "<div class='form_line'>" + 
-                    "<label path='title'>Title:</label>" + 
-                    "<div class='form_controls'>" + 
-                    "<input type='text' class='form-control' placeholder='Title' ng-model='title' ng-change='updateTitle()' />" + 
-                    "</div>" + 
-                    "</div>" +
+                  "<form>" + 
                     "<div class='form_line'>" +
-                    "<label>Image:</label>" + 
-                    "<div class='form_controls'>" + 
-                    "<div class='upload_button_holder'>" + 
-                    "<a href='#' class='upload_button'>Upload</a>" + 
-                    "<input type='file' name='file' class='cloudinary_fileupload' multiple ng-model='$parent.files'>" + 
+                      "<div class='form_controls'>" + 
+                        "<div class='upload_button_holder'>" + 
+                          "<a href='#' class='upload_button'>Upload</a>" + 
+                          "<input type='file' name='file' class='cloudinary_fileupload' multiple ng-model='$parent.files'>" + 
+                        "</div>" +
+                      "</div>" + 
                     "</div>" +
-                    "</div>" + 
-                    "</div>" +
-                    "</form>" +
-                    "<h2>Status</h2>" + 
-                    "<div class='file' ng-repeat='file in files'>" +
-                    "<h3>{{file.name}}</h3>" + 
-                    "<div class='status'>{{file.status}}</div>" + 
-                    "<div class='progress-bar'>" + 
-                    "<div class='progress' style='width: {{file.progress}}%' ng-init='progress=0'></div>" + 
+                  "</form>" +
+                  "<div class='file' ng-repeat='file in files'>" +
+                    "<div ng-show='!file.name'>" + 
+                      "<div class='status'>{{file.status}}</div>" + 
+                      "<div class='progress-bar'>" + 
+                        "<div class='progress' style='width: {{file.progress}}%' ng-init='progress=0'></div>" + 
+                      "</div>" + 
                     "</div>" + 
                     "<div class='form_line'>" + 
-                    "<div class='form_controls'>" + 
-                    "<div class='preview'></div>" +
-                    "</div>" + 
+                      "<div class='form_controls'>" + 
+                        "<div class='preview'>" + 
+                          "<img src='{{file.url}}' alt='' />" + 
+                        "</div>" +
+                      "</div>" + 
                     "</div>" +
-                    "<div class='info'>" +
-                    "<table>" +
-                    "<tr ng-repeat='(key, value) in file.result'>" +
-                    "<td> {{key}} </td>" +
-                    "<td> {{ value }} </td>" +
-                    "</tr>" +
-                    "</table>" +
-                    "</div>" +
-                    "</div>" +
-                    "</div>"
+                  "</div>" +
+                  "</div>"
     };
   }]);
