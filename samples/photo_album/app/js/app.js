@@ -3,10 +3,7 @@
 /* App Module */
 var photoAlbumApp = angular.module('photoAlbumApp', [
   'ngRoute',
-  'cloudinary',
-  'photoAlbumAnimations',
-  'photoAlbumControllers',
-  'photoAlbumServices'
+  'cloudinary'
 ]);
 
 photoAlbumApp.config(['$routeProvider',
@@ -32,8 +29,7 @@ photoAlbumApp.config(['$routeProvider',
         controller: 'photoUploadCtrl'
       }).
       when('/photos/new_jquery', {
-        templateUrl: 'partials/photo-upload-jquery.html',
-        controller: 'photoUploadCtrlJQuery'
+        templateUrl: 'partials/photo-upload-jquery.html'
       }).
       otherwise({
         redirectTo: '/photos'
@@ -44,9 +40,9 @@ photoAlbumApp.config(['$routeProvider',
     return {
       restrict : 'E',
       scope: { title:'@', maxClientWidth:'@', maxClientHeight:'@' },
-      controller: ['$scope', '$rootScope', '$routeParams', '$location',
+      controller: ['$scope',
         /* Uploading with jQuery File Upload */
-        function($scope, $rootScope, $routeParams, $location) {
+        function($scope) {
           $scope.files = {};
           $scope.widget = $(".cloudinary_fileupload")
             .unsigned_cloudinary_upload($.cloudinary.config().upload_preset, {tags: '', context:'photo='}, {
@@ -82,7 +78,7 @@ photoAlbumApp.config(['$routeProvider',
               $scope.$apply();
             })
             .on("cloudinarydone", function (e, data) {
-              $rootScope.photos = $rootScope.photos || [];
+              //$rootScope.photos = $rootScope.photos || [];
               data.result.context = {custom: {photo: $scope.title}};
               $scope.result = data.result;
               var name = data.files[0].name;
@@ -91,7 +87,7 @@ photoAlbumApp.config(['$routeProvider',
               file.url = data.result.url;
               file.result = data.result;
               $scope.files[name] = file;
-              $rootScope.photos.push(data.result);
+              //$rootScope.photos.push(data.result);
               $scope.$apply();
             }).on("cloudinaryfail", function(e, data){
                 var file = $scope.files[name] ||{};
